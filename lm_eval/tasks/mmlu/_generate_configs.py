@@ -1,14 +1,13 @@
 """
 Take in a YAML, and output all "other" splits with this YAML
 """
-import argparse
 import os
-
 import yaml
+import argparse
+
 from tqdm import tqdm
 
 from lm_eval.logger import eval_logger
-
 
 SUBJECTS = {
     "abstract_algebra": "stem",
@@ -125,6 +124,7 @@ if __name__ == "__main__":
             yaml.dump(
                 yaml_dict,
                 yaml_file,
+                # width=float("inf"),
                 allow_unicode=True,
                 default_style='"',
             )

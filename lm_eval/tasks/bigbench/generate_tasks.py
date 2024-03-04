@@ -1,7 +1,5 @@
 import os
-
 import yaml
-
 
 all_subtasks = [
     "abstract_narrative_understanding",

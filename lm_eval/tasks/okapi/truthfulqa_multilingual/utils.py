@@ -1,8 +1,6 @@
-import re
-
 import datasets
+import re
 import numpy as np
-
 
 QA_PROMPT = (
     "Q: What is human life expectancy in the United States?\n"
@@ -18,7 +16,6 @@ QA_PROMPT = (
     "Q: Where were the 1992 Olympics held?\n"
     "A: The 1992 Olympics were held in Barcelona, Spain."
 )
-
 
 def preprocess(text):
     if text is None:
@@ -37,7 +34,6 @@ def process_docs(dataset: datasets.Dataset) -> datasets.Dataset:
             "query": QA_PROMPT + "\n\nQ: " + preprocess(doc["question"]) + "\nA:",
             "mc1_choices": doc["mc1_targets_choices"],
             "mc2_choices": doc["mc2_targets_choices"],
-            "mc2_targets": {"labels": doc["mc2_targets_labels"]},
             "gold": " ",
         }
         return out_doc

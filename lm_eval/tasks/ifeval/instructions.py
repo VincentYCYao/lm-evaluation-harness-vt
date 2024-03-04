@@ -22,9 +22,7 @@ import string
 from typing import Dict, Optional, Sequence, Union
 
 import langdetect
-
 from lm_eval.tasks.ifeval import instructions_util
-
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,5 @@
-import re
-
 import datasets
+import re
 
 
 def preprocess(text):
@@ -19,13 +18,7 @@ def process_docs(dataset: datasets.Dataset) -> datasets.Dataset:
         out_doc = {
             "id": doc["id"],
             "query": "Question: " + preprocess(doc["instruction"]) + "\nAnswer:",
-            "choices": [
-                preprocess(doc["option_a"]),
-                preprocess(doc["option_b"]),
-                preprocess(doc["option_c"]),
-                preprocess(doc["option_d"]),
-                preprocess(doc["option_e"]),
-            ],
+            "choices": [preprocess(doc['option_a']), preprocess(doc['option_b']), preprocess(doc['option_c']), preprocess(doc['option_d']), preprocess(doc['option_e'])],
             "gold": ["A", "B", "C", "D", "E"].index(doc["answer"]),
         }
         return out_doc

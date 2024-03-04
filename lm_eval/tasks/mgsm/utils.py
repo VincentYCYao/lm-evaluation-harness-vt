@@ -1,6 +1,5 @@
-import argparse
-
 import yaml
+import argparse
 
 
 LANGUAGES = {
@@ -100,24 +99,11 @@ def add_regex_pattern(regex_pattern):
     return {
         "filter_list": [
             {
-                "name": "strict-match",
+                "name": "get-answer",
                 "filter": [
                     {
                         "function": "regex",
-                        "regex_pattern": f"""{regex_pattern}""",
-                    },
-                    {
-                        "function": "take_first",
-                    },
-                ],
-            },
-            {
-                "name": "flexible-extract",
-                "filter": [
-                    {
-                        "function": "regex",
-                        "regex_pattern": """(-?[$0-9.,]{2,})|(-?[0-9]+)""",
-                        "group_select": -1,
+                        "regex_pattern": regex_pattern,
                     },
                     {
                         "function": "take_first",
@@ -153,14 +139,14 @@ def gen_lang_yamls(output_dir: str, overwrite: bool, mode: str) -> None:
                 REGEX = LANGUAGES[lang]["REGEX"]
                 task_name = f"mgsm_native_cot_{lang}"
                 filter_list = add_regex_pattern(REGEX)
-                DELIMITER = "" if lang in ["zh", "ja"] else None
+                DELIMITER = "" if lang in ["zh", "ja"]
             elif mode == "en-cot":
                 ANSWER = LANGUAGES["en"]["ANSWER"]
                 REGEX = LANGUAGES["en"]["REGEX"]
                 task_name = f"mgsm_en_cot_{lang}"
 
             file_name = f"{task_name}.yaml"
-            ANSWER_TO_SKIP = len(LANGUAGES[lang]["ANSWER"]) + 1
+            ANSWER_TO_SKIP = len(LANGUAGES[lang]["ANSWER"])+1
             with open(
                 f"{output_dir}/{file_name}", "w" if overwrite else "x", encoding="utf8"
             ) as f:
@@ -181,10 +167,6 @@ def gen_lang_yamls(output_dir: str, overwrite: bool, mode: str) -> None:
                         f"""{{{{answer_number|string}}}}"""
                         f"""{{% endif %}}""",
                         **filter_list,
-                        "generation_kwargs": {
-                            "until": [QUESTION, "</s>", "<|im_end|>"],
-                            "do_sample": False,
-                        },
                         **({"target_delimiter": DELIMITER} if DELIMITER else {}),
                     },
                     f,

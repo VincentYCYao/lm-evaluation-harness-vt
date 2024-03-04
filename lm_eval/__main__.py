@@ -11,10 +11,9 @@ from typing import Union
 import numpy as np
 
 from lm_eval import evaluator, utils
-from lm_eval.evaluator import request_caching_arg_to_dict
 from lm_eval.logging_utils import WandbLogger
 from lm_eval.tasks import TaskManager, include_path, initialize_tasks
-from lm_eval.utils import make_table, simple_parse_args_string
+from lm_eval.utils import make_table
 
 
 def _handle_non_serializable(o):
@@ -120,13 +119,6 @@ def parse_eval_args() -> argparse.Namespace:
         metavar="DIR",
         help="A path to a sqlite db file for caching model responses. `None` if not caching.",
     )
-    parser.add_argument(
-        "--cache_requests",
-        type=str,
-        default=None,
-        choices=["true", "refresh", "delete"],
-        help="Speed up evaluation by caching the building of dataset requests. `None` if not caching.",
-    )
     parser.add_argument("--decontamination_ngrams_path", default=None)  # TODO: not used
     parser.add_argument(
         "--check_integrity",
@@ -201,12 +193,6 @@ def parse_eval_args() -> argparse.Namespace:
             "E.g, `--seed 42` sets all three seeds to 42."
         ),
     )
-    parser.add_argument(
-        "--trust_remote_code",
-        default=True,
-        help="Sets trust_remote_code to True to execute code to create HF Datasets from the Hub",
-    )
-
     return parser.parse_args()
 
 
@@ -216,7 +202,7 @@ def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
         args = parse_eval_args()
 
     if args.wandb_args:
-        wandb_logger = WandbLogger(**simple_parse_args_string(args.wandb_args))
+        wandb_logger = WandbLogger(args)
 
     eval_logger = utils.eval_logger
     eval_logger.setLevel(getattr(logging, f"{args.verbosity}"))
@@ -296,22 +282,8 @@ def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
             path.mkdir(parents=True, exist_ok=True)
             output_path_file = path.joinpath("results.json")
 
-    # Respect user's value passed in via CLI, otherwise default to True and add to comma-separated model args
-    if args.trust_remote_code:
-        os.environ["HF_DATASETS_TRUST_REMOTE_CODE"] = (
-            args.trust_remote_code if args.trust_remote_code else True
-        )
-        args.model_args = (
-            args.model_args
-            + f",trust_remote_code={os.environ['HF_DATASETS_TRUST_REMOTE_CODE']}"
-        )
-
     eval_logger.info(f"Selected Tasks: {task_names}")
     eval_logger.info("Loading selected tasks...")
-
-    request_caching_args = request_caching_arg_to_dict(
-        cache_requests=args.cache_requests
-    )
 
     results = evaluator.simple_evaluate(
         model=args.model,
@@ -330,7 +302,6 @@ def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
         gen_kwargs=args.gen_kwargs,
         task_manager=task_manager,
         predict_only=args.predict_only,
-        **request_caching_args,
         random_seed=args.seed[0],
         numpy_random_seed=args.seed[1],
         torch_random_seed=args.seed[2],

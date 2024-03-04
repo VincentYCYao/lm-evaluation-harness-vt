@@ -1,20 +1,30 @@
 import copy
 import json
 import logging
-import os
 import re
-import subprocess
-from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from packaging.version import Version
-from torch.utils.collect_env import get_pretty_env_info
-from transformers import __version__ as trans_version
+
+from lm_eval import utils
 
 
 logger = logging.getLogger(__name__)
+
+try:
+    import wandb
+
+    assert Version(wandb.__version__) >= Version("0.13.6")
+    if Version(wandb.__version__) < Version("0.13.6"):
+        wandb.require("report-editing:v0")
+except Exception as e:
+    logger.warning(
+        "To use the wandb reporting functionality please install wandb>=0.13.6.\n"
+        "To install the latest version of wandb run `pip install wandb --upgrade`\n"
+        f"{e}"
+    )
 
 
 def remove_none_pattern(input_string: str) -> Tuple[str, bool]:
@@ -68,31 +78,16 @@ def get_wandb_printer() -> Literal["Printer"]:
 
 
 class WandbLogger:
-    def __init__(self, **kwargs) -> None:
-        """Attaches to wandb logger if already initialized. Otherwise, passes kwargs to wandb.init()
+    def __init__(self, args: Any) -> None:
+        """Initialize the WandbLogger.
 
         Args:
-            kwargs Optional[Any]: Arguments for configuration.
-
-        Parse and log the results returned from evaluator.simple_evaluate() with:
-            wandb_logger.post_init(results)
-            wandb_logger.log_eval_result()
-            wandb_logger.log_eval_samples(results["samples"])
+            results (Dict[str, Any]): The results dictionary.
+            args (Any): Arguments for configuration.
         """
-        try:
-            import wandb
-
-            assert Version(wandb.__version__) >= Version("0.13.6")
-            if Version(wandb.__version__) < Version("0.13.6"):
-                wandb.require("report-editing:v0")
-        except Exception as e:
-            logger.warning(
-                "To use the wandb reporting functionality please install wandb>=0.13.6.\n"
-                "To install the latest version of wandb run `pip install wandb --upgrade`\n"
-                f"{e}"
-            )
-
-        self.wandb_args: Dict[str, Any] = kwargs
+        self.wandb_args: Dict[str, Any] = utils.simple_parse_args_string(
+            args.wandb_args
+        )
 
         # initialize a W&B run
         if wandb.run is None:
@@ -166,8 +161,6 @@ class WandbLogger:
         ]
 
         def make_table(columns: List[str], key: str = "results"):
-            import wandb
-
             table = wandb.Table(columns=columns)
             results = copy.deepcopy(self.results)
 
@@ -206,8 +199,6 @@ class WandbLogger:
 
     def _log_results_as_artifact(self) -> None:
         """Log results as JSON artifact to W&B."""
-        import wandb
-
         dumped = json.dumps(
             self.results, indent=2, default=_handle_non_serializable, ensure_ascii=False
         )
@@ -326,8 +317,6 @@ class WandbLogger:
     def _log_samples_as_artifact(
         self, data: List[Dict[str, Any]], task_name: str
     ) -> None:
-        import wandb
-
         # log the samples as an artifact
         dumped = json.dumps(
             data,
@@ -395,55 +384,3 @@ class WandbLogger:
                 self._log_samples_as_artifact(eval_preds, task_name)
 
             self.run.log({f"{group}_eval_results": grouped_df})
-
-
-def get_commit_from_path(repo_path: Path) -> Optional[str]:
-    git_folder = Path(repo_path, ".git")
-    if git_folder.is_file():
-        git_folder = Path(
-            git_folder.parent,
-            git_folder.read_text(encoding="utf-8").split("\n")[0].split(" ")[-1],
-        )
-    if Path(git_folder, "HEAD").exists():
-        head_name = (
-            Path(git_folder, "HEAD")
-            .read_text(encoding="utf-8")
-            .split("\n")[0]
-            .split(" ")[-1]
-        )
-        head_ref = Path(git_folder, head_name)
-        git_hash = head_ref.read_text(encoding="utf-8").replace("\n", "")
-    else:
-        git_hash = None
-    return git_hash
-
-
-def get_git_commit_hash():
-    """
-    Gets the git commit hash of your current repo (if it exists).
-    Source: https://github.com/EleutherAI/gpt-neox/blob/b608043be541602170bfcfb8ec9bf85e8a0799e0/megatron/neox_arguments/neox_args.py#L42
-    """
-    try:
-        git_hash = subprocess.check_output(["git", "describe", "--always"]).strip()
-        git_hash = git_hash.decode()
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        # FileNotFoundError occurs when git not installed on system
-        git_hash = get_commit_from_path(os.getcwd())  # git hash of repo if exists
-    return git_hash
-
-
-def add_env_info(storage: Dict[str, Any]):
-    try:
-        pretty_env_info = get_pretty_env_info()
-    except Exception as err:
-        pretty_env_info = str(err)
-    transformers_version = trans_version
-    upper_dir_commit = get_commit_from_path(
-        Path(os.getcwd(), "..")
-    )  # git hash of upper repo if exists
-    added_info = {
-        "pretty_env_info": pretty_env_info,
-        "transformers_version": transformers_version,
-        "upper_git_hash": upper_dir_commit,  # in case this repo is submodule
-    }
-    storage.update(added_info)

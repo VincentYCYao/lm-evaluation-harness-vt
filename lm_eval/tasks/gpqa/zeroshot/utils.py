@@ -1,8 +1,6 @@
-import random
-import re
-
 import datasets
-
+import re
+import random
 
 def preprocess(text):
     if text is None:
@@ -31,7 +29,7 @@ def process_docs(dataset: datasets.Dataset) -> datasets.Dataset:
             "choice2": choices[1],
             "choice3": choices[2],
             "choice4": choices[3],
-            "answer": f"({chr(65 + correct_answer_index)})",
+            "answer": f"({chr(65 + correct_answer_index)})"
         }
         return out_doc
 

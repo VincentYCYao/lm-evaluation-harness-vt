@@ -1,5 +1,5 @@
-import numpy as np
 import sklearn
+import numpy as np
 
 
 def cb_multi_fi(items):

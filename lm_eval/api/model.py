@@ -133,28 +133,6 @@ class LM(abc.ABC):
         args2 = {k: v for k, v in additional_config.items() if v is not None}
         return cls(**args, **args2)
 
-    @classmethod
-    def create_from_arg_obj(
-        cls: Type[T], arg_dict: dict, additional_config: Optional[dict] = None
-    ) -> T:
-        """
-        Creates an instance of the LM class using the given arg_obj
-
-        Parameters:
-        - arg_obj: A dict containing arguments in the format key1=value1,key2=value2.
-        - additional_config: Optional dictionary containing additional configuration parameters.
-
-        Returns:
-        - Instance of the LM class.
-        """
-
-        additional_config = {} if additional_config is None else additional_config
-        additional_config = {
-            k: v for k, v in additional_config.items() if v is not None
-        }
-
-        return cls(**arg_dict, **additional_config)
-
     @property
     def rank(self):
         # used in the case of parallelism. Hardcoded to
@@ -225,7 +203,7 @@ class CachingLM:
             eval_logger.info(
                 f"Loading '{attr}' responses from cache '{self.cache_db}' where possible..."
             )
-            for req in tqdm(requests, desc="Checking cached requests"):
+            for req in tqdm(requests):
                 hsh = hash_args(attr, req.args)
                 if attr == "generate_until" and req.args[1].get("do_sample", False):
                     # when we are doing non-greedy generation, don't use the cache
@@ -246,9 +224,7 @@ class CachingLM:
                 else:
                     res.append(None)
                     remaining_reqs.append(req)
-            eval_logger.info(
-                f"Cached requests: {len(requests) - len(remaining_reqs)}, Requests remaining: {len(remaining_reqs)}"
-            )
+
             # actually run the LM on the requests that do not have cached results
             rem_res = getattr(self.lm, attr)(remaining_reqs)
 
@@ -298,8 +274,8 @@ class TemplateLM(LM):
             continuation = context[-n_spaces:] + continuation
             context = context[:-n_spaces]
 
-        whole_enc = self.tok_encode(context + continuation)
-        context_enc = self.tok_encode(context)
+        whole_enc = self.tok_encode(context + continuation, add_special_tokens=False)
+        context_enc = self.tok_encode(context, add_special_tokens=False)
 
         context_enc_len = len(context_enc)
         continuation_enc = whole_enc[context_enc_len:]

@@ -5,11 +5,17 @@ import importlib.util
 import inspect
 import logging
 import os
+import pathlib
 import re
+import subprocess
+import sys
 from itertools import islice
-from typing import Any, Callable, List
+from typing import (
+    Any,
+    Callable,
+    List,
+)
 
-import numpy as np
 import yaml
 from jinja2 import BaseLoader, Environment, StrictUndefined
 
@@ -69,7 +75,7 @@ def simple_parse_args_string(args_string):
     args_string = args_string.strip()
     if not args_string:
         return {}
-    arg_list = [arg for arg in args_string.split(",") if arg]
+    arg_list = [arg for arg in args_string.split(",") if arg] 
     args_dict = {
         k: handle_arg_string(v) for k, v in [arg.split("=") for arg in arg_list]
     }
@@ -101,12 +107,6 @@ def pattern_match(patterns, source_list):
         for matching in fnmatch.filter(source_list, pattern):
             task_names.add(matching)
     return sorted(list(task_names))
-
-
-def softmax(x):
-    """Compute softmax values for each sets of scores in x."""
-    e_x = np.exp(x - np.max(x))
-    return e_x / e_x.sum()
 
 
 def general_detokenize(string):
@@ -242,7 +242,7 @@ def make_table(result_dict, column: str = "results"):
     values = []
 
     for k, dic in result_dict[column].items():
-        version = result_dict["versions"].get(k, "N/A")
+        version = result_dict["versions"][k]
         n = str(result_dict["n-shot"][k])
 
         if "alias" in dic:
@@ -289,6 +289,54 @@ def positional_deprecated(fn):
 
     return _wrapper
 
+
+@positional_deprecated
+def find_test_root(start_path: pathlib.Path) -> pathlib.Path:
+    """
+    Search upward in the directory tree to a maximum of three layers
+    to find and return the package root (containing the 'tests' folder)
+    """
+    cur_path = start_path.resolve()
+    max_layers = 3
+    for _ in range(max_layers):
+        if (cur_path / "tests" / "test_version_stable.py").exists():
+            return cur_path
+        else:
+            cur_path = cur_path.parent.resolve()
+    raise FileNotFoundError(
+        f"Unable to find package root within {max_layers} upwards" + f"of {start_path}"
+    )
+
+
+@positional_deprecated
+def run_task_tests(task_list: List[str]):
+    """
+    Find the package root and run the tests for the given tasks
+    """
+    import pytest
+
+    package_root = find_test_root(start_path=pathlib.Path(__file__))
+    task_string = " or ".join(task_list)
+    args = [
+        f"{package_root}/tests/test_version_stable.py",
+        f"--rootdir={package_root}",
+        "-k",
+        f"{task_string}",
+    ]
+    sys.path.append(str(package_root))
+    pytest_return_val = pytest.main(args)
+    if pytest_return_val:
+        raise ValueError(
+            f"Not all tests for the specified tasks ({task_list}) ran successfully! Error code: {pytest_return_val}"
+        )
+
+
+def get_git_commit_hash():
+    """
+    Gets the git commit hash of your current repo (if it exists).
+    Source: https://github.com/EleutherAI/gpt-neox/blob/b608043be541602170bfcfb8ec9bf85e8a0799e0/megatron/neox_arguments/neox_args.py#L42
+    """
+    return None
 
 def ignore_constructor(loader, node):
     return node
@@ -371,10 +419,16 @@ def apply_template(template: str, doc: dict) -> str:
     return rtemplate.render(**doc)
 
 
-def create_iterator(raw_iterator, *, rank=0, world_size=1, limit=None):
+def create_iterator(raw_iterator, rank, world_size, limit=None):
     """
     Method for creating a (potentially) sliced and limited
     iterator from a raw document iterator. Used for splitting data
     among ranks in multigpu setting or only pulling a sample of documents
     """
     return islice(raw_iterator, rank, limit, world_size)
+
+
+# Multi-token stopping criteria
+
+
+# from more_itertools

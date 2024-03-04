@@ -1,8 +1,7 @@
-import json
 import os
-
-import numpy as np
+import json
 import requests
+import numpy as np
 
 from lm_eval.utils import eval_logger
 

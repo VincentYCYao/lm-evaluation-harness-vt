@@ -1,8 +1,0 @@
-{
-    "model": "facebook/galactica-30b",
-    "task": "biolama_umls_test",
-    "batch_size": auto,
-    "save_file_name": "galactica-30b-biolama-umls-test.json",
-    "input_path": "/app/lm-evaluation-harness-vt/probing_tasks_vt"
-
-}

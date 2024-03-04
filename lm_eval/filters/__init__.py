@@ -1,9 +1,10 @@
-from functools import partial
 from typing import List, Union
+from functools import partial
 
 from lm_eval.api.filter import FilterEnsemble
-
-from . import extraction, selection, transformation
+from . import selection
+from . import extraction
+from . import transformation
 
 
 FILTER_REGISTRY = {
