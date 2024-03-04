@@ -1,0 +1,5 @@
+task: biolama_wikidata_test
+training_split: train
+validation_split: validation
+test_split: test
+class: !function task.BioLAMA_Wikidata_test
