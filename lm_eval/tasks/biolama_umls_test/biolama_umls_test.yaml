@@ -1,0 +1,13 @@
+task: biolama_umls_test
+training_split: train
+validation_split: validation
+test_split: test
+class: !function task.BioLAMA_umls_test
+
+# set env var for API KEY
+# run following command
+# python lm_eval --model openai-chat-completions --model_args model=gpt-3.5-turbo --tasks biolama_umls --output_path ./eval_output --include_path path/to/where/you/saved/this/task
+
+# --include_path
+
+# python lm_eval --model openai-chat-completions --model_args model=gpt-3.5-turbo --tasks biolama_umls --output_path ./eval_output --include_path /Users/chaeeunlee/Documents/VSC_workspaces/probing_tasks
