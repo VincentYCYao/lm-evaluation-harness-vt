@@ -1293,3 +1293,125 @@ class BioLAMA_ctd_test_prompt4_returnList(ConfigurableTask):
             whether a higher value of the submetric is better
         """
         return {k: True for k in ["topk_acc"]}
+
+
+class BioLAMA_ctd_test_prompt5_returnList(ConfigurableTask):
+    DATASET_PATH = "JadeCheng/Biolama-ctd"
+    OUTPUT_TYPE = 'generate_until'
+    VERSION = 0.0  # "Yaml"
+    DATASET_NAME = None
+
+    # CONFIG = None
+
+    def __init__(self):
+        super().__init__(config={'metadata': {'version': self.VERSION}})
+
+    def doc_to_text(self, doc):
+        # manual prompt template
+        pid2prompt_meta = {
+            'CD1': {'template': '[X] prevents diseases such as [Y].'},
+            'CD2': {
+                'template': '[X] exposure is associated with significant increases in diseases such as [Y].'},
+            'CG1': {'template': '[X] treatment decreases the levels of [Y] expression.'},
+            'CG17': {'template': '[X] treatment increases the levels of [Y] expression.'},
+            'CG18': {'template': '[X] upregulates [Y] protein.'},
+            'CG2': {'template': '[X] results in decreased activity of [Y] protein.'},
+            'CG21': {'template': '[X] results in increased phosphorylation of [Y] protein.'},
+            'CG4': {'template': '[X] results in increased activity of [Y] protein.'},
+            'CG6': {'template': '[X] treatment decreases the levels of [Y] expression.'},
+            'CG9': {'template': '[X] binds to [Y] protein.'},
+            'CP1': {'template': '[X] analog results in decreased phenotypes such as [Y] .'},
+            'CP2': {'template': '[X] induces phenotypes such as [Y].'},
+            'CP3': {'template': '[X] affects phenotypes such as [Y].'},
+            'GD1': {'template': 'Gene [X] is associated with diseases such as [Y] .'},
+            'GP1': {'template': 'Gene [X] is associated with pathways such as [Y].'}
+        }
+
+        # Make the template for that specific doc.
+        template = pid2prompt_meta[doc["predicate_id"]]["template"]
+
+        subject = doc["sub_label"]
+        sentence = template.replace('[X]', subject).replace('[Y]', "<BLANK>")
+
+        prompt_question = f'Consider the following sentence: "{sentence}"'
+
+        # formatting instruction
+        prompt_formatting = ('\n\n Your answer should only contain 5 most probable noun-phrases, '
+                             'without any leading or tailing characters. '
+                             'The noun-phrases should be separated by ";". '
+                             'Noun-phrases are ordered such that the first is the most probably one.')
+
+        # # baseline prompt
+        # prompt_filling = '\n\n-> Which noun-phrase should <BLANK> be filled with? Give me 5 most probable candidates.'
+
+        # try new prompt
+        prompt_answer = 'Give me noun-phrases that can replace <BLANK> in the sentence and be as specific as possible.'
+
+        prompt = prompt_question + prompt_answer + prompt_formatting
+        return f"{prompt}\n"
+
+    def doc_to_target(self, doc):
+        objects = []
+        if 'obj_labels' in doc:
+            objects = doc['obj_labels']
+        elif 'obj_label' in doc:
+            objects = [doc['obj_label']]
+
+        if 'obj_aliases' in doc:
+            objects += [a for al in doc['obj_aliases'] for a in al]
+
+        lower_objects = list(dict.fromkeys([obj.lower() for obj in objects]))
+
+        # print(f"lower_objects = {lower_objects}")
+
+        return lower_objects
+
+    def has_training_docs(self):
+        return False
+
+    def has_validation_docs(self):
+        return False
+
+    def has_test_docs(self):
+        return True
+
+    # def validation_docs(self):
+    #     # print(f"self.dataset = {self.dataset}")
+    #     return self.dataset["validation"]
+
+    def test_docs(self):
+        return self.dataset["test"]
+
+    def process_results(self, doc, results):
+
+        gold = self.doc_to_target(doc)  # lower_objects
+
+        def convert_to_list(names_string):
+            # Split the string by semicolon (;) and convert it to a list
+            names_list = names_string.split(";")
+            # Remove leading/trailing whitespace from each name
+            names_list = [name.strip() for name in names_list]
+            # Remove empty strings from the list
+            names_list = [name for name in names_list if name]
+            return names_list
+
+        filtered_resps = convert_to_list(results[0][0])
+
+        # return {"topk_acc": topk_match_fn(gold, filtered_resps), "f1": compute_f1_from_lists(gold, filtered_resps)}
+        return {"topk_acc": topk_match_fn(gold, filtered_resps)}
+
+    def aggregation(self):
+        """
+        :returns: {str: [float] -> float}
+            A dictionary where keys are the names of submetrics and values are
+            functions that aggregate a list of metrics
+        """
+        return {k: mean for k in ["topk_acc"]}
+
+    def higher_is_better(self):
+        """
+        :returns: {str: bool}
+            A dictionary where keys are the names of submetrics and values are
+            whether a higher value of the submetric is better
+        """
+        return {k: True for k in ["topk_acc"]}
