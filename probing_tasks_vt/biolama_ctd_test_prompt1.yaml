@@ -1,0 +1,82 @@
+task: biolama_ctd_test_prompt1
+training_split: train
+validation_split: validation
+test_split: test
+class: !function task.BioLAMA_ctd_test_prompt1
+
+#def doc_to_text(self, doc):
+#        # manual prompt template
+#        pid2prompt_meta = {
+#            'CD1': {'template': '[X] prevents diseases such as [Y].'},
+#            'CD2': {
+#                'template': '[X] exposure is associated with significant increases in diseases such as [Y].'},
+#            'CG1': {'template': '[X] treatment decreases the levels of [Y] expression.'},
+#            'CG17': {'template': '[X] treatment increases the levels of [Y] expression.'},
+#            'CG18': {'template': '[X] upregulates [Y] protein.'},
+#            'CG2': {'template': '[X] results in decreased activity of [Y] protein.'},
+#            'CG21': {'template': '[X] results in increased phosphorylation of [Y] protein.'},
+#            'CG4': {'template': '[X] results in increased activity of [Y] protein.'},
+#            'CG6': {'template': '[X] treatment decreases the levels of [Y] expression.'},
+#            'CG9': {'template': '[X] binds to [Y] protein.'},
+#            'CP1': {'template': '[X] analog results in decreased phenotypes such as [Y] .'},
+#            'CP2': {'template': '[X] induces phenotypes such as [Y].'},
+#            'CP3': {'template': '[X] affects phenotypes such as [Y].'},
+#            'GD1': {'template': 'Gene [X] is associated with diseases such as [Y] .'},
+#            'GP1': {'template': 'Gene [X] is associated with pathways such as [Y].'}
+#        }
+#
+#        # Make the template for that specific doc.
+#        template = pid2prompt_meta[doc["predicate_id"]]["template"]
+#
+#        subject = doc["sub_label"]
+#        sentence = template.replace('[X]', subject).replace('[Y]', "<BLANK>")
+#
+#        prompt_question = f'Consider the following sentence: "{sentence}"'
+#
+#        # formatting instruction
+#        prompt_formatting = ('\n\n Give me 5 most probable candidates. '
+#                             'Output your response in JSON format with keys '
+#                             '"top_1", "top_2", "top_3", "top_4" and "top_5", '
+#                             'where the value for key "top_1" is the most promising entity that would replace <BLANK>.')
+#
+#        # # baseline prompt
+#        # prompt_filling = '\n\n-> Which noun-phrase should <BLANK> be filled with? Give me 5 most probable candidates. '
+#
+#        # try new prompt
+#        # prompt_filling = '\n\n-> Which noun-phrase should <BLANK> be filled with? Give me 5 most probable candidates. '
+#        pid2suffix = {
+#            'CD1': {
+#                'template': 'Answer the above question with the specific disease name.'},
+#            'CD2': {
+#                'template': 'Answer the above question with the specific disease name.'},
+#            'CG1': {
+#                'template': 'Answer the above question with the specific gene/protein name.'},
+#            'CG17': {
+#                'template': 'Answer the above question with the specific gene/protein name.'},
+#            'CG18': {
+#                'template': 'Answer the above question with the specific protein name.'},
+#            'CG2': {
+#                'template': 'Answer the above question with the specific protein name.'},
+#            'CG21': {
+#                'template': 'Answer the above question with the specific protein name.'},
+#            'CG4': {
+#                'template': 'Answer the above question with the specific protein name.'},
+#            'CG6': {
+#                'template': 'Answer the above question with the specific gene/protein name.'},
+#            'CG9': {
+#                'template': 'Answer the above question with the specific protein name.'},
+#            'CP1': {
+#                'template': 'Answer the above question with the specific phenotype name.'},
+#            'CP2': {
+#                'template': 'Answer the above question with the specific phenotype name.'},
+#            'CP3': {
+#                'template': 'Answer the above question with the specific phenotype name.'},
+#            'GD1': {
+#                'template': 'Answer the above question with the specific disease name.'},
+#            'GP1': {
+#                'template': 'Answer the above question with the specific pathway name.'},
+#        }
+#        prompt_answer = ('\n\n You need to ' + pid2suffix[doc["predicate_id"]]["template"].lower())
+#
+#        prompt = prompt_question + prompt_answer + prompt_formatting
+#        return f"{prompt}\n"
