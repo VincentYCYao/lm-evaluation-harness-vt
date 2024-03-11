@@ -181,7 +181,8 @@ class BioLAMA_umls(ConfigurableTask):
 
         filtered_resps = [apply_to_resp([resp]) for resp in results][0][0]
 
-        return {"topk_acc": topk_match_fn(gold, filtered_resps), "f1": compute_f1_from_lists(gold, filtered_resps)}
+        # return {"topk_acc": topk_match_fn(gold, filtered_resps), "f1": compute_f1_from_lists(gold, filtered_resps)}
+        return {"topk_acc": topk_match_fn(gold, filtered_resps)}
 
     def aggregation(self):
         """
@@ -308,7 +309,8 @@ class BioLAMA_umls_test(ConfigurableTask):
 
         filtered_resps = [apply_to_resp([resp]) for resp in results][0][0]
 
-        return {"topk_acc": topk_match_fn(gold, filtered_resps), "f1": compute_f1_from_lists(gold, filtered_resps)}
+        # return {"topk_acc": topk_match_fn(gold, filtered_resps), "f1": compute_f1_from_lists(gold, filtered_resps)}
+        return {"topk_acc": topk_match_fn(gold, filtered_resps)}
 
     def aggregation(self):
         """
@@ -429,7 +431,8 @@ class BioLAMA_Wikidata(ConfigurableTask):
 
         filtered_resps = [apply_to_resp([resp]) for resp in results][0][0]
 
-        return {"topk_acc": topk_match_fn(gold, filtered_resps), "f1": compute_f1_from_lists(gold, filtered_resps)}
+        # return {"topk_acc": topk_match_fn(gold, filtered_resps), "f1": compute_f1_from_lists(gold, filtered_resps)}
+        return {"topk_acc": topk_match_fn(gold, filtered_resps)}
 
     def aggregation(self):
         """
@@ -682,7 +685,7 @@ class BioLAMA_ctd(ConfigurableTask):
 
             filtered_resps = [apply_to_resp([resp]) for resp in results][0][0]
 
-            return {"topk_acc": topk_match_fn(gold, filtered_resps), "f1": compute_f1_from_lists(gold, filtered_resps)}
+
 
         def aggregation(self):
             """
@@ -859,7 +862,8 @@ class BioLAMA_ctd_test_prompt1(ConfigurableTask):
 
                 filtered_resps = [apply_to_resp([resp]) for resp in results][0][0]
 
-                return {"topk_acc": topk_match_fn(gold, filtered_resps), "f1": compute_f1_from_lists(gold, filtered_resps)}
+                # return {"topk_acc": topk_match_fn(gold, filtered_resps), "f1": compute_f1_from_lists(gold, filtered_resps)}
+                return {"topk_acc": topk_match_fn(gold, filtered_resps)}
 
             def aggregation(self):
                 """
@@ -1004,7 +1008,8 @@ class BioLAMA_ctd_test_prompt2(ConfigurableTask):
 
         filtered_resps = [apply_to_resp([resp]) for resp in results][0][0]
 
-        return {"topk_acc": topk_match_fn(gold, filtered_resps), "f1": compute_f1_from_lists(gold, filtered_resps)}
+        # return {"topk_acc": topk_match_fn(gold, filtered_resps), "f1": compute_f1_from_lists(gold, filtered_resps)}
+        return {"topk_acc": topk_match_fn(gold, filtered_resps)}
 
     def aggregation(self):
         """
@@ -1149,7 +1154,8 @@ class BioLAMA_ctd_test_prompt3(ConfigurableTask):
 
         filtered_resps = [apply_to_resp([resp]) for resp in results][0][0]
 
-        return {"topk_acc": topk_match_fn(gold, filtered_resps), "f1": compute_f1_from_lists(gold, filtered_resps)}
+        # return {"topk_acc": topk_match_fn(gold, filtered_resps), "f1": compute_f1_from_lists(gold, filtered_resps)}
+        return {"topk_acc": topk_match_fn(gold, filtered_resps)}
 
     def aggregation(self):
         """
@@ -1268,6 +1274,8 @@ class BioLAMA_ctd_test_prompt4_returnList(ConfigurableTask):
             return names_list
 
         filtered_resps = convert_to_list(results[0][0])
+
+        # return {"topk_acc": topk_match_fn(gold, filtered_resps), "f1": compute_f1_from_lists(gold, filtered_resps)}
         return {"topk_acc": topk_match_fn(gold, filtered_resps)}
 
     def aggregation(self):
