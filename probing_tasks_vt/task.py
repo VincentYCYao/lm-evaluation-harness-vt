@@ -571,315 +571,315 @@ class BioLAMA_Wikidata_test(ConfigurableTask):
         """
         return {k: True for k in ["topk_acc"]}
 
+
 class BioLAMA_ctd(ConfigurableTask):
-        DATASET_PATH = "JadeCheng/Biolama-ctd"
-        OUTPUT_TYPE = 'generate_until'
-        VERSION = 0.0  # "Yaml"
-        DATASET_NAME = None
+    DATASET_PATH = "JadeCheng/Biolama-ctd"
+    OUTPUT_TYPE = 'generate_until'
+    VERSION = 0.0  # "Yaml"
+    DATASET_NAME = None
 
-        # CONFIG = None
+    # CONFIG = None
 
-        def __init__(self):
-            super().__init__(config={'metadata': {'version': self.VERSION}})
+    def __init__(self):
+        super().__init__(config={'metadata': {'version': self.VERSION}})
 
-        def doc_to_text(self, doc):
-            # manual prompt template
-            pid2prompt_meta = {
-                'CD1': {'template': '[X] prevents diseases such as [Y].'},
-                'CD2': {'template': '[X] exposure is associated with significant increases in diseases such as [Y].'},
-                'CG1': {'template': '[X] treatment decreases the levels of [Y] expression.'},
-                'CG17': {'template': '[X] treatment increases the levels of [Y] expression.'},
-                'CG18': {'template': '[X] upregulates [Y] protein.'},
-                'CG2': {'template': '[X] results in decreased activity of [Y] protein.'},
-                'CG21': {'template': '[X] results in increased phosphorylation of [Y] protein.'},
-                'CG4': {'template': '[X] results in increased activity of [Y] protein.'},
-                'CG6': {'template': '[X] treatment decreases the levels of [Y] expression.'},
-                'CG9': {'template': '[X] binds to [Y] protein.'},
-                'CP1': {'template': '[X] analog results in decreased phenotypes such as [Y] .'},
-                'CP2': {'template': '[X] induces phenotypes such as [Y].'},
-                'CP3': {'template': '[X] affects phenotypes such as [Y].'},
-                'GD1': {'template': 'Gene [X] is associated with diseases such as [Y] .'},
-                'GP1': {'template': 'Gene [X] is associated with pathways such as [Y].'}
-            }
+    def doc_to_text(self, doc):
+        # manual prompt template
+        pid2prompt_meta = {
+            'CD1': {'template': '[X] prevents diseases such as [Y].'},
+            'CD2': {'template': '[X] exposure is associated with significant increases in diseases such as [Y].'},
+            'CG1': {'template': '[X] treatment decreases the levels of [Y] expression.'},
+            'CG17': {'template': '[X] treatment increases the levels of [Y] expression.'},
+            'CG18': {'template': '[X] upregulates [Y] protein.'},
+            'CG2': {'template': '[X] results in decreased activity of [Y] protein.'},
+            'CG21': {'template': '[X] results in increased phosphorylation of [Y] protein.'},
+            'CG4': {'template': '[X] results in increased activity of [Y] protein.'},
+            'CG6': {'template': '[X] treatment decreases the levels of [Y] expression.'},
+            'CG9': {'template': '[X] binds to [Y] protein.'},
+            'CP1': {'template': '[X] analog results in decreased phenotypes such as [Y] .'},
+            'CP2': {'template': '[X] induces phenotypes such as [Y].'},
+            'CP3': {'template': '[X] affects phenotypes such as [Y].'},
+            'GD1': {'template': 'Gene [X] is associated with diseases such as [Y] .'},
+            'GP1': {'template': 'Gene [X] is associated with pathways such as [Y].'}
+        }
 
-            # Make the template for that specific doc.
-            template = pid2prompt_meta[doc["predicate_id"]]["template"]
+        # Make the template for that specific doc.
+        template = pid2prompt_meta[doc["predicate_id"]]["template"]
 
-            subject = doc["sub_label"]
-            sentence = template.replace('[X]', subject).replace('[Y]', "<BLANK>")
+        subject = doc["sub_label"]
+        sentence = template.replace('[X]', subject).replace('[Y]', "<BLANK>")
 
-            prefix = f'Consider the following sentence: "{sentence}"'
-            suffix = '\n\n-> Which noun-phrase should <BLANK> be filled with? Give me 5 most probable candidates. Output your response in JSON format with keys "top_1", "top_2", "top_3", "top_4" and "top_5", where the value for key "top_1" is the most promising entity that would replace <BLANK>.'
+        prefix = f'Consider the following sentence: "{sentence}"'
+        suffix = '\n\n-> Which noun-phrase should <BLANK> be filled with? Give me 5 most probable candidates. Output your response in JSON format with keys "top_1", "top_2", "top_3", "top_4" and "top_5", where the value for key "top_1" is the most promising entity that would replace <BLANK>.'
 
-            prompt = prefix + suffix
-            return f"{prompt}\n"
+        prompt = prefix + suffix
+        return f"{prompt}\n"
 
-        def doc_to_target(self, doc):
-            objects = []
-            if 'obj_labels' in doc:
-                objects = doc['obj_labels']
-            elif 'obj_label' in doc:
-                objects = [doc['obj_label']]
+    def doc_to_target(self, doc):
+        objects = []
+        if 'obj_labels' in doc:
+            objects = doc['obj_labels']
+        elif 'obj_label' in doc:
+            objects = [doc['obj_label']]
 
-            if 'obj_aliases' in doc:
-                objects += [a for al in doc['obj_aliases'] for a in al]
+        if 'obj_aliases' in doc:
+            objects += [a for al in doc['obj_aliases'] for a in al]
 
-            lower_objects = list(dict.fromkeys([obj.lower() for obj in objects]))
+        lower_objects = list(dict.fromkeys([obj.lower() for obj in objects]))
 
-            # print(f"lower_objects = {lower_objects}")
+        # print(f"lower_objects = {lower_objects}")
 
-            return lower_objects
+        return lower_objects
 
-        def has_training_docs(self):
-            return False
+    def has_training_docs(self):
+        return False
 
-        def has_validation_docs(self):
-            return False
+    def has_validation_docs(self):
+        return False
 
-        def has_test_docs(self):
-            return True
+    def has_test_docs(self):
+        return True
 
-        # def validation_docs(self):
-        #     # print(f"self.dataset = {self.dataset}")
-        #     return self.dataset["validation"]
+    # def validation_docs(self):
+    #     # print(f"self.dataset = {self.dataset}")
+    #     return self.dataset["validation"]
 
-        def test_docs(self):
-            return self.dataset["test"]
+    def test_docs(self):
+        return self.dataset["test"]
 
-        def process_results(self, doc, results):
+    def process_results(self, doc, results):
 
-            gold = self.doc_to_target(doc)  # lower_objects
+        gold = self.doc_to_target(doc)  # lower_objects
 
-            def dict_to_list(topk_dict, k=5):
+        def dict_to_list(topk_dict, k=5):
 
-                ordered_list = []
+            ordered_list = []
 
-                # Loop through keys from top_1 to top_k
-                for i in range(1, k + 1):
-                    key = "top_" + str(i)
-                    if key in topk_dict:
-                        ordered_list.append(topk_dict[key])
+            # Loop through keys from top_1 to top_k
+            for i in range(1, k + 1):
+                key = "top_" + str(i)
+                if key in topk_dict:
+                    ordered_list.append(topk_dict[key])
 
-                return ordered_list
+            return ordered_list
 
-            def apply_to_resp(resp):
-                try:
-                    topk_dicts = json.loads(resp[0])
-                    # print(topk_dicts)
-                    # print("The first string is valid JSON.")
-                except json.decoder.JSONDecodeError:
-                    # Handle the specific case where the JSON is invalid
-                    print("Invalid JSON encountered.")
-                    topk_dicts = {'top_1': '', 'top_2': '', 'top_3': '', 'top_4': '', 'top_5': ''}
-                    # return None  # or return {}, [] depending on what you expect
-                except ValueError:
-                    # Handle other value errors (this is a bit more general)
-                    print("Value error encountered while parsing JSON.")
-                    topk_dicts = {'top_1': '', 'top_2': '', 'top_3': '', 'top_4': '', 'top_5': ''}
-                except Exception as e:
-                    # Catch-all for any other unexpected errors
-                    print(f"Unexpected error while parsing JSON: {e}")
-                    topk_dicts = {'top_1': '', 'top_2': '', 'top_3': '', 'top_4': '', 'top_5': ''}
-                print("topk_dicts: ", topk_dicts)
-                return dict_to_list(topk_dicts)
+        def apply_to_resp(resp):
+            try:
+                topk_dicts = json.loads(resp[0])
+                # print(topk_dicts)
+                # print("The first string is valid JSON.")
+            except json.decoder.JSONDecodeError:
+                # Handle the specific case where the JSON is invalid
+                print("Invalid JSON encountered.")
+                topk_dicts = {'top_1': '', 'top_2': '', 'top_3': '', 'top_4': '', 'top_5': ''}
+                # return None  # or return {}, [] depending on what you expect
+            except ValueError:
+                # Handle other value errors (this is a bit more general)
+                print("Value error encountered while parsing JSON.")
+                topk_dicts = {'top_1': '', 'top_2': '', 'top_3': '', 'top_4': '', 'top_5': ''}
+            except Exception as e:
+                # Catch-all for any other unexpected errors
+                print(f"Unexpected error while parsing JSON: {e}")
+                topk_dicts = {'top_1': '', 'top_2': '', 'top_3': '', 'top_4': '', 'top_5': ''}
+            print("topk_dicts: ", topk_dicts)
+            return dict_to_list(topk_dicts)
 
-            filtered_resps = [apply_to_resp([resp]) for resp in results][0][0]
+        filtered_resps = [apply_to_resp([resp]) for resp in results][0][0]
 
+    def aggregation(self):
+        """
+        :returns: {str: [float] -> float}
+            A dictionary where keys are the names of submetrics and values are
+            functions that aggregate a list of metrics
+        """
+        return {k: mean for k in ["topk_acc"]}
 
+    def higher_is_better(self):
+        """
+        :returns: {str: bool}
+            A dictionary where keys are the names of submetrics and values are
+            whether a higher value of the submetric is better
+        """
+        return {k: True for k in ["topk_acc"]}
 
-        def aggregation(self):
-            """
-            :returns: {str: [float] -> float}
-                A dictionary where keys are the names of submetrics and values are
-                functions that aggregate a list of metrics
-            """
-            return {k: mean for k in ["topk_acc"]}
-
-        def higher_is_better(self):
-            """
-            :returns: {str: bool}
-                A dictionary where keys are the names of submetrics and values are
-                whether a higher value of the submetric is better
-            """
-            return {k: True for k in ["topk_acc"]}
 
 class BioLAMA_ctd_test_prompt1(ConfigurableTask):
-            DATASET_PATH = "JadeCheng/Biolama-ctd"
-            OUTPUT_TYPE = 'generate_until'
-            VERSION = 0.0  # "Yaml"
-            DATASET_NAME = None
+    DATASET_PATH = "JadeCheng/Biolama-ctd"
+    OUTPUT_TYPE = 'generate_until'
+    VERSION = 0.0  # "Yaml"
+    DATASET_NAME = None
 
-            # CONFIG = None
+    # CONFIG = None
 
-            def __init__(self):
-                super().__init__(config={'metadata': {'version': self.VERSION}})
+    def __init__(self):
+        super().__init__(config={'metadata': {'version': self.VERSION}})
 
-            def doc_to_text(self, doc):
-                # manual prompt template
-                pid2prompt_meta = {
-                    'CD1': {'template': '[X] prevents diseases such as [Y].'},
-                    'CD2': {
-                        'template': '[X] exposure is associated with significant increases in diseases such as [Y].'},
-                    'CG1': {'template': '[X] treatment decreases the levels of [Y] expression.'},
-                    'CG17': {'template': '[X] treatment increases the levels of [Y] expression.'},
-                    'CG18': {'template': '[X] upregulates [Y] protein.'},
-                    'CG2': {'template': '[X] results in decreased activity of [Y] protein.'},
-                    'CG21': {'template': '[X] results in increased phosphorylation of [Y] protein.'},
-                    'CG4': {'template': '[X] results in increased activity of [Y] protein.'},
-                    'CG6': {'template': '[X] treatment decreases the levels of [Y] expression.'},
-                    'CG9': {'template': '[X] binds to [Y] protein.'},
-                    'CP1': {'template': '[X] analog results in decreased phenotypes such as [Y] .'},
-                    'CP2': {'template': '[X] induces phenotypes such as [Y].'},
-                    'CP3': {'template': '[X] affects phenotypes such as [Y].'},
-                    'GD1': {'template': 'Gene [X] is associated with diseases such as [Y] .'},
-                    'GP1': {'template': 'Gene [X] is associated with pathways such as [Y].'}
-                }
+    def doc_to_text(self, doc):
+        # manual prompt template
+        pid2prompt_meta = {
+            'CD1': {'template': '[X] prevents diseases such as [Y].'},
+            'CD2': {
+                'template': '[X] exposure is associated with significant increases in diseases such as [Y].'},
+            'CG1': {'template': '[X] treatment decreases the levels of [Y] expression.'},
+            'CG17': {'template': '[X] treatment increases the levels of [Y] expression.'},
+            'CG18': {'template': '[X] upregulates [Y] protein.'},
+            'CG2': {'template': '[X] results in decreased activity of [Y] protein.'},
+            'CG21': {'template': '[X] results in increased phosphorylation of [Y] protein.'},
+            'CG4': {'template': '[X] results in increased activity of [Y] protein.'},
+            'CG6': {'template': '[X] treatment decreases the levels of [Y] expression.'},
+            'CG9': {'template': '[X] binds to [Y] protein.'},
+            'CP1': {'template': '[X] analog results in decreased phenotypes such as [Y] .'},
+            'CP2': {'template': '[X] induces phenotypes such as [Y].'},
+            'CP3': {'template': '[X] affects phenotypes such as [Y].'},
+            'GD1': {'template': 'Gene [X] is associated with diseases such as [Y] .'},
+            'GP1': {'template': 'Gene [X] is associated with pathways such as [Y].'}
+        }
 
-                # Make the template for that specific doc.
-                template = pid2prompt_meta[doc["predicate_id"]]["template"]
+        # Make the template for that specific doc.
+        template = pid2prompt_meta[doc["predicate_id"]]["template"]
 
-                subject = doc["sub_label"]
-                sentence = template.replace('[X]', subject).replace('[Y]', "<BLANK>")
+        subject = doc["sub_label"]
+        sentence = template.replace('[X]', subject).replace('[Y]', "<BLANK>")
 
-                prompt_question = f'Consider the following sentence: "{sentence}"'
+        prompt_question = f'Consider the following sentence: "{sentence}"'
 
-                # formatting instruction
-                prompt_formatting = ('\n\n Give me 5 most probable candidates. '
-                                     'Output your response in JSON format with keys '
-                                     '"top_1", "top_2", "top_3", "top_4" and "top_5", '
-                                     'where the value for key "top_1" is the most promising entity that would replace <BLANK>.')
+        # formatting instruction
+        prompt_formatting = ('\n\n Give me 5 most probable candidates. '
+                             'Output your response in JSON format with keys '
+                             '"top_1", "top_2", "top_3", "top_4" and "top_5", '
+                             'where the value for key "top_1" is the most promising entity that would replace <BLANK>.')
 
-                # # baseline prompt
-                # prompt_filling = '\n\n-> Which noun-phrase should <BLANK> be filled with? Give me 5 most probable candidates. '
+        # # baseline prompt
+        # prompt_filling = '\n\n-> Which noun-phrase should <BLANK> be filled with? Give me 5 most probable candidates. '
 
-                # try new prompt
-                # prompt_filling = '\n\n-> Which noun-phrase should <BLANK> be filled with? Give me 5 most probable candidates. '
-                pid2suffix = {
-                    'CD1': {
-                        'template': 'Answer the above question with the specific disease name.'},
-                    'CD2': {
-                        'template': 'Answer the above question with the specific disease name.'},
-                    'CG1': {
-                        'template': 'Answer the above question with the specific gene/protein name.'},
-                    'CG17': {
-                        'template': 'Answer the above question with the specific gene/protein name.'},
-                    'CG18': {
-                        'template': 'Answer the above question with the specific protein name.'},
-                    'CG2': {
-                        'template': 'Answer the above question with the specific protein name.'},
-                    'CG21': {
-                        'template': 'Answer the above question with the specific protein name.'},
-                    'CG4': {
-                        'template': 'Answer the above question with the specific protein name.'},
-                    'CG6': {
-                        'template': 'Answer the above question with the specific gene/protein name.'},
-                    'CG9': {
-                        'template': 'Answer the above question with the specific protein name.'},
-                    'CP1': {
-                        'template': 'Answer the above question with the specific phenotype name.'},
-                    'CP2': {
-                        'template': 'Answer the above question with the specific phenotype name.'},
-                    'CP3': {
-                        'template': 'Answer the above question with the specific phenotype name.'},
-                    'GD1': {
-                        'template': 'Answer the above question with the specific disease name.'},
-                    'GP1': {
-                        'template': 'Answer the above question with the specific pathway name.'},
-                }
-                prompt_answer = ('\n\n You need to ' + pid2suffix[doc["predicate_id"]]["template"].lower())
+        # try new prompt
+        # prompt_filling = '\n\n-> Which noun-phrase should <BLANK> be filled with? Give me 5 most probable candidates. '
+        pid2suffix = {
+            'CD1': {
+                'template': 'Answer the above question with the specific disease name.'},
+            'CD2': {
+                'template': 'Answer the above question with the specific disease name.'},
+            'CG1': {
+                'template': 'Answer the above question with the specific gene/protein name.'},
+            'CG17': {
+                'template': 'Answer the above question with the specific gene/protein name.'},
+            'CG18': {
+                'template': 'Answer the above question with the specific protein name.'},
+            'CG2': {
+                'template': 'Answer the above question with the specific protein name.'},
+            'CG21': {
+                'template': 'Answer the above question with the specific protein name.'},
+            'CG4': {
+                'template': 'Answer the above question with the specific protein name.'},
+            'CG6': {
+                'template': 'Answer the above question with the specific gene/protein name.'},
+            'CG9': {
+                'template': 'Answer the above question with the specific protein name.'},
+            'CP1': {
+                'template': 'Answer the above question with the specific phenotype name.'},
+            'CP2': {
+                'template': 'Answer the above question with the specific phenotype name.'},
+            'CP3': {
+                'template': 'Answer the above question with the specific phenotype name.'},
+            'GD1': {
+                'template': 'Answer the above question with the specific disease name.'},
+            'GP1': {
+                'template': 'Answer the above question with the specific pathway name.'},
+        }
+        prompt_answer = ('\n\n You need to ' + pid2suffix[doc["predicate_id"]]["template"].lower())
 
-                prompt = prompt_question + prompt_answer + prompt_formatting
-                return f"{prompt}\n"
+        prompt = prompt_question + prompt_answer + prompt_formatting
+        return f"{prompt}\n"
 
-            def doc_to_target(self, doc):
-                objects = []
-                if 'obj_labels' in doc:
-                    objects = doc['obj_labels']
-                elif 'obj_label' in doc:
-                    objects = [doc['obj_label']]
+    def doc_to_target(self, doc):
+        objects = []
+        if 'obj_labels' in doc:
+            objects = doc['obj_labels']
+        elif 'obj_label' in doc:
+            objects = [doc['obj_label']]
 
-                if 'obj_aliases' in doc:
-                    objects += [a for al in doc['obj_aliases'] for a in al]
+        if 'obj_aliases' in doc:
+            objects += [a for al in doc['obj_aliases'] for a in al]
 
-                lower_objects = list(dict.fromkeys([obj.lower() for obj in objects]))
+        lower_objects = list(dict.fromkeys([obj.lower() for obj in objects]))
 
-                # print(f"lower_objects = {lower_objects}")
+        # print(f"lower_objects = {lower_objects}")
 
-                return lower_objects
+        return lower_objects
 
-            def has_training_docs(self):
-                return False
+    def has_training_docs(self):
+        return False
 
-            def has_validation_docs(self):
-                return False
+    def has_validation_docs(self):
+        return False
 
-            def has_test_docs(self):
-                return True
+    def has_test_docs(self):
+        return True
 
-            # def validation_docs(self):
-            #     # print(f"self.dataset = {self.dataset}")
-            #     return self.dataset["validation"]
+    # def validation_docs(self):
+    #     # print(f"self.dataset = {self.dataset}")
+    #     return self.dataset["validation"]
 
-            def test_docs(self):
-                return self.dataset["test"]
+    def test_docs(self):
+        return self.dataset["test"]
 
-            def process_results(self, doc, results):
+    def process_results(self, doc, results):
 
-                gold = self.doc_to_target(doc)  # lower_objects
+        gold = self.doc_to_target(doc)  # lower_objects
 
-                def dict_to_list(topk_dict, k=5):
+        def dict_to_list(topk_dict, k=5):
 
-                    ordered_list = []
+            ordered_list = []
 
-                    # Loop through keys from top_1 to top_k
-                    for i in range(1, k + 1):
-                        key = "top_" + str(i)
-                        if key in topk_dict:
-                            ordered_list.append(topk_dict[key])
+            # Loop through keys from top_1 to top_k
+            for i in range(1, k + 1):
+                key = "top_" + str(i)
+                if key in topk_dict:
+                    ordered_list.append(topk_dict[key])
 
-                    return ordered_list
+            return ordered_list
 
-                def apply_to_resp(resp):
-                    try:
-                        topk_dicts = json.loads(resp[0])
-                        # print(topk_dicts)
-                        # print("The first string is valid JSON.")
-                    except json.decoder.JSONDecodeError:
-                        # Handle the specific case where the JSON is invalid
-                        print("Invalid JSON encountered.")
-                        topk_dicts = {'top_1': '', 'top_2': '', 'top_3': '', 'top_4': '', 'top_5': ''}
-                        # return None  # or return {}, [] depending on what you expect
-                    except ValueError:
-                        # Handle other value errors (this is a bit more general)
-                        print("Value error encountered while parsing JSON.")
-                        topk_dicts = {'top_1': '', 'top_2': '', 'top_3': '', 'top_4': '', 'top_5': ''}
-                    except Exception as e:
-                        # Catch-all for any other unexpected errors
-                        print(f"Unexpected error while parsing JSON: {e}")
-                        topk_dicts = {'top_1': '', 'top_2': '', 'top_3': '', 'top_4': '', 'top_5': ''}
-                    print("topk_dicts: ", topk_dicts)
-                    return dict_to_list(topk_dicts)
+        def apply_to_resp(resp):
+            try:
+                topk_dicts = json.loads(resp[0])
+                # print(topk_dicts)
+                # print("The first string is valid JSON.")
+            except json.decoder.JSONDecodeError:
+                # Handle the specific case where the JSON is invalid
+                print("Invalid JSON encountered.")
+                topk_dicts = {'top_1': '', 'top_2': '', 'top_3': '', 'top_4': '', 'top_5': ''}
+                # return None  # or return {}, [] depending on what you expect
+            except ValueError:
+                # Handle other value errors (this is a bit more general)
+                print("Value error encountered while parsing JSON.")
+                topk_dicts = {'top_1': '', 'top_2': '', 'top_3': '', 'top_4': '', 'top_5': ''}
+            except Exception as e:
+                # Catch-all for any other unexpected errors
+                print(f"Unexpected error while parsing JSON: {e}")
+                topk_dicts = {'top_1': '', 'top_2': '', 'top_3': '', 'top_4': '', 'top_5': ''}
+            print("topk_dicts: ", topk_dicts)
+            return dict_to_list(topk_dicts)
 
-                filtered_resps = [apply_to_resp([resp]) for resp in results][0][0]
+        filtered_resps = [apply_to_resp([resp]) for resp in results][0][0]
 
-                # return {"topk_acc": topk_match_fn(gold, filtered_resps), "f1": compute_f1_from_lists(gold, filtered_resps)}
-                return {"topk_acc": topk_match_fn(gold, filtered_resps)}
+        # return {"topk_acc": topk_match_fn(gold, filtered_resps), "f1": compute_f1_from_lists(gold, filtered_resps)}
+        return {"topk_acc": topk_match_fn(gold, filtered_resps)}
 
-            def aggregation(self):
-                """
-                :returns: {str: [float] -> float}
-                    A dictionary where keys are the names of submetrics and values are
-                    functions that aggregate a list of metrics
-                """
-                return {k: mean for k in ["topk_acc"]}
+    def aggregation(self):
+        """
+        :returns: {str: [float] -> float}
+            A dictionary where keys are the names of submetrics and values are
+            functions that aggregate a list of metrics
+        """
+        return {k: mean for k in ["topk_acc"]}
 
-            def higher_is_better(self):
-                """
-                :returns: {str: bool}
-                    A dictionary where keys are the names of submetrics and values are
-                    whether a higher value of the submetric is better
-                """
-                return {k: True for k in ["topk_acc"]}
+    def higher_is_better(self):
+        """
+        :returns: {str: bool}
+            A dictionary where keys are the names of submetrics and values are
+            whether a higher value of the submetric is better
+        """
+        return {k: True for k in ["topk_acc"]}
 
 
 class BioLAMA_ctd_test_prompt2(ConfigurableTask):
@@ -932,7 +932,7 @@ class BioLAMA_ctd_test_prompt2(ConfigurableTask):
         # prompt_filling = '\n\n-> Which noun-phrase should <BLANK> be filled with? Give me 5 most probable candidates. '
 
         # try new prompt
-        prompt_answer = ('\n\n You need to answer the question with noun-phrase that can replace <BLANK>.' )
+        prompt_answer = ('\n\n You need to answer the question with noun-phrase that can replace <BLANK>.')
 
         prompt = prompt_question + prompt_answer + prompt_formatting
         return f"{prompt}\n"
