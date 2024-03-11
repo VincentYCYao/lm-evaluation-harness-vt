@@ -1,8 +1,13 @@
-task: biolama_ctd_test_prompt4_returnList
+task: biolama_ctd_test_prompt6_returnList_llama2
 training_split: train
 validation_split: validation
 test_split: test
-class: !function task.BioLAMA_ctd_test_prompt4_returnList
+class: !function task.BioLAMA_ctd_test_prompt6_returnList_llama2
+
+#---------------------
+# the prompt is the same as task.BioLAMA_ctd_test_prompt5_returnList
+# use new string parsing function to calculate the top-5 accuracy when evaluating <<Llama2>>
+#---------------------
 
 #def doc_to_text(self, doc):
 #        # manual prompt template
@@ -34,15 +39,16 @@ class: !function task.BioLAMA_ctd_test_prompt4_returnList
 #        prompt_question = f'Consider the following sentence: "{sentence}"'
 #
 #        # formatting instruction
-#        prompt_formatting = ('\n\n Give me 5 most probable candidates. '
-#                             'The candidates should be separated by ";". '
-#                             'Candidates are ordered such that the first entity is the most probably one.')
+#        prompt_formatting = ('\n\n Your answer should only contain 5 most probable noun-phrases, '
+#                             'without any leading or tailing characters. '
+#                             'The noun-phrases should be separated by ";". '
+#                             'Noun-phrases are ordered such that the first is the most probably one.')
 #
 #        # # baseline prompt
 #        # prompt_filling = '\n\n-> Which noun-phrase should <BLANK> be filled with? Give me 5 most probable candidates.'
 #
 #        # try new prompt
-#        prompt_answer = '\n\n You need to can replace <BLANK> with noun-phrase and be as specific as possible.'
+#        prompt_answer = 'Give me noun-phrases that can replace <BLANK> in the sentence and be as specific as possible.'
 #
 #        prompt = prompt_question + prompt_answer + prompt_formatting
 #        return f"{prompt}\n"
